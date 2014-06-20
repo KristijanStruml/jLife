@@ -4,6 +4,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,11 +24,11 @@ public class Population {
 		population = Cell.createPopulation(rows, columns);
 	}
 
-	public int getRows() {
+	public int getRowCount() {
 		return rows;
 	}
 
-	public int getColumns() {
+	public int getColumnCount() {
 		return columns;
 	}
 
@@ -49,32 +50,20 @@ public class Population {
 		if(row < 0 || col < 0 || row >= rows || col >= columns) {
 			return;
 		}
-		if(!population[row][col].isAlive()) {
-			population[row][col].animate();
+		if(population[row][col].isAlive()) {
+			return;
+		}
 
-			if(row - 1 >= 0 && col - 1 >= 0) {
-				population[row - 1][col - 1].incrementNeighbourCount();
-			}
-			if(col - 1 >= 0) {
-				population[row][col - 1].incrementNeighbourCount();
-			}
-			if(row + 1 < rows && col - 1 >= 0) {
-				population[row + 1][col - 1].incrementNeighbourCount();
-			}
-			if(row - 1 >= 0) {
-				population[row - 1][col].incrementNeighbourCount();
-			}
-			if(row + 1 < rows) {
-				population[row + 1][col].incrementNeighbourCount();
-			}
-			if(row - 1 >= 0 && col + 1 < columns) {
-				population[row - 1][col + 1].incrementNeighbourCount();
-			}
-			if(col + 1 < columns) {
-				population[row][col + 1].incrementNeighbourCount();
-			}
-			if(row + 1 < rows && col + 1 < columns) {
-				population[row + 1][col + 1].incrementNeighbourCount();
+		population[row][col].animate();
+
+		for(int i = row - 1; i <= row + 1; i++) {
+			for(int j = col - 1; j <= col + 1; j++) {
+				if(i == row && j == col) {
+					continue;
+				}
+				try {
+					population[i][j].incrementNeighbourCount();
+				} catch(IndexOutOfBoundsException e) { }
 			}
 		}
 	}
@@ -83,32 +72,20 @@ public class Population {
 		if(row < 0 || col < 0 || row >= rows || col >= columns) {
 			return;
 		}
-		if(population[row][col].isAlive()) {
-			population[row][col].kill();
+		if(!population[row][col].isAlive()) {
+			return;
+		}
 
-			if(row - 1 >= 0 && col - 1 >= 0) {
-				population[row - 1][col - 1].decrementNeighbourCount();
-			}
-			if(col - 1 >= 0) {
-				population[row][col - 1].decrementNeighbourCount();
-			}
-			if(row + 1 < rows && col - 1 >= 0) {
-				population[row + 1][col - 1].decrementNeighbourCount();
-			}
-			if(row - 1 >= 0) {
-				population[row - 1][col].decrementNeighbourCount();
-			}
-			if(row + 1 < rows) {
-				population[row + 1][col].decrementNeighbourCount();
-			}
-			if(row - 1 >= 0 && col + 1 < columns) {
-				population[row - 1][col + 1].decrementNeighbourCount();
-			}
-			if(col + 1 < columns) {
-				population[row][col + 1].decrementNeighbourCount();
-			}
-			if(row + 1 < rows && col + 1 < columns) {
-				population[row + 1][col + 1].decrementNeighbourCount();
+		population[row][col].kill();
+
+		for(int i = row - 1; i <= row + 1; i++) {
+			for(int j = col - 1; j <= col + 1; j++) {
+				if(i == row && j == col) {
+					continue;
+				}
+				try {
+					population[i][j].decrementNeighbourCount();
+				} catch(IndexOutOfBoundsException e) { }
 			}
 		}
 	}
@@ -117,9 +94,6 @@ public class Population {
 		Population next = new Population(rows, columns);
 		for(int i = 0; i < rows; i++) {
 			for(int j = 0; j < columns; j++) {
-				if(!population[i][j].isAlive() && population[i][j].getNeighbourCount() == 0) {
-					continue;
-				}
 				if(population[i][j].isAlive()
 						&& (population[i][j].getNeighbourCount() == 2 || population[i][j].getNeighbourCount() == 3)) {
 					next.animateCell(i, j);
@@ -134,14 +108,14 @@ public class Population {
 
 	public static Population fromFile(String path) {
 		try {
-			InputStream inputStream = Population.class.getResourceAsStream(path);
-			BufferedReader reader = new BufferedReader(new InputStreamReader(new BufferedInputStream(inputStream),
-					"UTF-8"));
+			InputStream is = Population.class.getResourceAsStream(path);
+			BufferedReader br = new BufferedReader(new InputStreamReader(new BufferedInputStream(is),
+					StandardCharsets.UTF_8));
 
 			List<String> input = new ArrayList<String>();
 			String line = null;
 
-			while((line = reader.readLine()) != null) {
+			while((line = br.readLine()) != null) {
 				input.add(line);
 			}
 
@@ -150,9 +124,9 @@ public class Population {
 			Population p = new Population(rows, cols);
 
 			for(int i = 0; i < input.size(); i++) {
-				for(int j = 0; j < input.get(0).length(); j++) {
-					char[] linija = input.get(i).toCharArray();
-					if(linija[j] == '#') {
+				char[] array = input.get(i).toCharArray();
+				for(int j = 0; j < input.get(0).length(); j++) {					
+					if(array[j] == '#') {
 						p.animateCell(i, j);
 					}
 				}

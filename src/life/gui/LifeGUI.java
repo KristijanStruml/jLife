@@ -33,7 +33,7 @@ public class LifeGUI extends JFrame implements IGridObserver {
 
 	private Thread life;
 	private Object lock;
-	private boolean paused;
+	private volatile boolean paused;
 	private volatile boolean running;
 
 	private Map<String, Action> actions = new HashMap<String, Action>();
@@ -52,7 +52,7 @@ public class LifeGUI extends JFrame implements IGridObserver {
 		initActions();
 		initGUI();
 		displayPopulation();
-		
+
 		addWindowListener(new WindowAdapter() {
 			@Override
 			public void windowClosing(WindowEvent e) {
@@ -66,9 +66,9 @@ public class LifeGUI extends JFrame implements IGridObserver {
 	}
 
 	private void initGUI() {
-		biotope = new CellGrid(population.getRows(), population.getColumns());
+		biotope = new CellGrid(population.getRowCount(), population.getColumnCount());
 		biotope.registerObserver(this);
-		
+
 		life = new Thread(new Life());		
 		lock = new Object();
 
@@ -179,19 +179,19 @@ public class LifeGUI extends JFrame implements IGridObserver {
 
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				population = new Population(population.getRows(), population.getColumns());
+				population = new Population(population.getRowCount(), population.getColumnCount());
 				biotope.clear();
 				displayPopulation();
 			}
 		};
-		
+
 		actions.put("clear", action);
 	}
 
 	private JComboBox<String> createPatternMenu() {
 
-		jcbPatternChooser = new JComboBox<String>(ExampleManager.getNames());
-		final Map<Integer, String> examples = ExampleManager.getMap();
+		jcbPatternChooser = new JComboBox<String>(ExampleManager.getExampleNames());
+		final Map<Integer, String> examples = ExampleManager.getExampleMap();
 
 		jcbPatternChooser.addActionListener(new ActionListener() {
 			@Override
@@ -233,7 +233,7 @@ public class LifeGUI extends JFrame implements IGridObserver {
 
 		return toolbar;
 	}
-	
+
 	private void displayPopulationEDT() {
 		SwingUtilities.invokeLater(new Runnable() {			
 			@Override
@@ -256,12 +256,15 @@ public class LifeGUI extends JFrame implements IGridObserver {
 
 	@Override
 	public void cellTurnedOn(int row, int column) {
-		population.animateCell(row, column);
-
+		if(!running) {
+			population.animateCell(row, column);
+		}
 	}
 
 	@Override
 	public void cellTurnedOff(int row, int column) {
-		population.killCell(row, column);
+		if(!running) {
+			population.killCell(row, column);
+		}
 	}
 }

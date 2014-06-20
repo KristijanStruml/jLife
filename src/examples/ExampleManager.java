@@ -5,7 +5,7 @@ import java.util.Map;
 
 public class ExampleManager {
 	
-	public static String[] getNames() {		
+	public static String[] getExampleNames() {		
 		String[] patterns = { 
 				"Glider", 
 				"Lightweight spaceship", 
@@ -18,7 +18,7 @@ public class ExampleManager {
 		return patterns;
 	}
 	
-	public static Map<Integer, String> getMap() {		
+	public static Map<Integer, String> getExampleMap() {		
 		Map<Integer, String> examples = new HashMap<Integer, String>();
 		
 		examples.put(0, "/examples/Glider.txt");
